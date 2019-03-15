@@ -158,7 +158,7 @@ class Decoder extends EventEmitter {
         // non-binary full packet
         this.emit('decoded', packet);
       }
-    } else if (obj is ByteBuffer ||
+    } else if ((obj != null && obj is ByteBuffer) ||
         obj is Uint8List ||
         obj is Map && obj['base64'] != null) {
       // raw binary data

@@ -60,18 +60,20 @@ class PacketParser {
       utf8encode = null;
     }
 
-    if (packet['data'] is Uint8List) {
-      return encodeBuffer(packet, supportsBinary, callback,
-          fromClient: fromClient);
-    } else if (packet['data'] is Map &&
-        packet['data']['buffer'] is ByteBuffer) {
-      packet['data'] = (packet['data']['buffer'] as ByteBuffer).asUint8List();
-      return encodeBuffer(packet, supportsBinary, callback,
-          fromClient: fromClient);
-    } else if (packet['data'] is ByteBuffer) {
-      packet['data'] = (packet['data'] as ByteBuffer).asUint8List();
-      return encodeBuffer(packet, supportsBinary, callback,
-          fromClient: fromClient);
+    if (packet['data'] != null) {
+      if (packet['data'] is Uint8List) {
+        return encodeBuffer(
+            packet, supportsBinary, callback, fromClient: fromClient);
+      } else
+      if (packet['data'] is Map && (packet['data']['buffer'] != null && packet['data']['buffer'] is ByteBuffer)) {
+        packet['data'] = (packet['data']['buffer'] as ByteBuffer).asUint8List();
+        return encodeBuffer(
+            packet, supportsBinary, callback, fromClient: fromClient);
+      } else if (packet['data'] is ByteBuffer) {
+        packet['data'] = (packet['data'] as ByteBuffer).asUint8List();
+        return encodeBuffer(
+            packet, supportsBinary, callback, fromClient: fromClient);
+      }
     }
 
     // Sending data as a utf-8 string
@@ -185,7 +187,7 @@ class PacketParser {
   static hasBinary(List packets) {
     return packets.any((map) {
       final data = map['data'];
-      return data is ByteBuffer;
+      return data != null && data is ByteBuffer;
     });
   }
 
