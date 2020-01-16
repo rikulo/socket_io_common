@@ -157,7 +157,7 @@ class PacketParser {
     }
 
     // Binary data
-    if (binaryType == 'arraybuffer') {
+    if (binaryType == 'arraybuffer' || data is ByteBuffer) {
       // wrap Buffer/ArrayBuffer data into an Uint8Array
       var intArray = (data as ByteBuffer).asUint8List();
       type = intArray[0];
