@@ -10,7 +10,7 @@ class Binary {
   static final String KEY_NUM = "num";
 
   static Map deconstructPacket(Map packet) {
-    List<int> buffers = [];
+    List buffers = [];
 
     packet['data'] = _deconstructPacket(packet['data'], buffers);
     packet['attachments'] = buffers.length;

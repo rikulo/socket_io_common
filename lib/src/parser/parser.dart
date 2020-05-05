@@ -118,7 +118,7 @@ class Encoder {
       var buffers = deconstruction['buffers'];
 
       // add packet info to beginning of data list
-      callback([pack]..addAll(buffers)); // write all the buffers
+      callback(<dynamic>[pack]..addAll(buffers)); // write all the buffers
     };
 //
 //  binary.removeBlobs(obj, writeEncoding);
