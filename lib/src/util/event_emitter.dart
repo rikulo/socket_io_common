@@ -24,20 +24,17 @@ class EventEmitter {
   /**
    * Mapping of events to a list of event handlers
    */
-  Map<String, List<EventHandler>> _events;
+  Map<String, List<EventHandler>> _events = new HashMap<String, List<EventHandler>>();
 
   /**
    * Mapping of events to a list of one-time event handlers
    */
-  Map<String, List<EventHandler>> _eventsOnce;
+  Map<String, List<EventHandler>> _eventsOnce = new HashMap<String, List<EventHandler>>();
 
   /**
    * Constructor
    */
-  EventEmitter() {
-    this._events = new HashMap<String, List<EventHandler>>();
-    this._eventsOnce = new HashMap<String, List<EventHandler>>();
-  }
+  EventEmitter();
 
   /**
    * This function triggers all the handlers currently listening
@@ -61,8 +58,8 @@ class EventEmitter {
    * This function binds the [handler] as a listener to the [event]
    */
   void on(String event, EventHandler handler) {
-    this._events.putIfAbsent(event, () => new List<EventHandler>());
-    this._events[event].add(handler);
+    this._events.putIfAbsent(event, () => <EventHandler>[]);
+    this._events[event]!.add(handler);
   }
 
   /**
@@ -71,14 +68,14 @@ class EventEmitter {
    * it is removed.
    */
   void once(String event, EventHandler handler) {
-    this._eventsOnce.putIfAbsent(event, () => new List<EventHandler>());
-    this._eventsOnce[event].add(handler);
+    this._eventsOnce.putIfAbsent(event, () => <EventHandler>[]);
+    this._eventsOnce[event]!.add(handler);
   }
 
   /**
    * This function attempts to unbind the [handler] from the [event]
    */
-  void off(String event, [EventHandler handler]) {
+  void off(String event, [EventHandler? handler]) {
     if (handler != null) {
       this._events[event]?.remove(handler);
       this._eventsOnce[event]?.remove(handler);

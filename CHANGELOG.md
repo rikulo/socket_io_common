@@ -1,3 +1,9 @@
+## 1.0.0-nullsafety.0
+
+**Features:**
+
+* [socket_io_common#2](https://github.com/rikulo/socket_io_common/issues/2) Support null safety
+
 ## 0.9.2
 
 **Bug fix:**
