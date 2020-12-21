@@ -1,9 +1,13 @@
+## 2.0.0-beta.0
+
+** Features: **
+* [socket_io_common#3](https://github.com/rikulo/socket_io_common/issues/3) Support Socket.io server v3.0
+
 ## 1.0.0-nullsafety.1
 
 minor fix
 
 ## 1.0.0-nullsafety.0
-
 **Features:**
 
 * [socket_io_common#2](https://github.com/rikulo/socket_io_common/issues/2) Support null safety
