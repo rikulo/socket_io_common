@@ -1,3 +1,8 @@
+## 2.0.0-beta.0
+
+** Features: **
+* [socket_io_common#3](https://github.com/rikulo/socket_io_common/issues/3) Support Socket.io server v3.0
+
 ## 0.9.2
 
 **Bug fix:**

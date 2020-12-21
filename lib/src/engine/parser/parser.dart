@@ -17,9 +17,8 @@ import 'dart:typed_data';
 
 import 'package:socket_io_common/src/engine/parser/wtf8.dart';
 
-
 // Protocol version
-final protocol = 3;
+final protocol = 4;
 
 enum PacketType { OPEN, CLOSE, PING, PONG, MESSAGE, UPGRADE, NOOP }
 
@@ -43,36 +42,39 @@ const Map<String, int> PacketTypeMap = const <String, int>{
   'noop': 6
 };
 
+final SEPARATOR = String.fromCharCode(30);
+
 class PacketParser {
-  static const ERROR = const {'type': 'error', 'data': 'parser error'};
+  static const ERROR_PACKET = const {'type': 'error', 'data': 'parser error'};
   static String encodePacket(Map packet,
       {supportsBinary,
       utf8encode = false,
       callback(_),
       bool fromClient = false}) {
     if (supportsBinary is Function) {
-      callback = supportsBinary;
+      callback = supportsBinary as dynamic Function(dynamic);
       supportsBinary = null;
     }
 
     if (utf8encode is Function) {
-      callback = utf8encode;
+      callback = utf8encode as dynamic Function(dynamic);
       utf8encode = null;
     }
 
     if (packet['data'] != null) {
       if (packet['data'] is Uint8List) {
-        return encodeBuffer(
-            packet, supportsBinary, callback, fromClient: fromClient);
-      } else
-      if (packet['data'] is Map && (packet['data']['buffer'] != null && packet['data']['buffer'] is ByteBuffer)) {
+        return encodeBuffer(packet, supportsBinary, callback,
+            fromClient: fromClient);
+      } else if (packet['data'] is Map &&
+          (packet['data']['buffer'] != null &&
+              packet['data']['buffer'] is ByteBuffer)) {
         packet['data'] = (packet['data']['buffer'] as ByteBuffer).asUint8List();
-        return encodeBuffer(
-            packet, supportsBinary, callback, fromClient: fromClient);
+        return encodeBuffer(packet, supportsBinary, callback,
+            fromClient: fromClient);
       } else if (packet['data'] is ByteBuffer) {
         packet['data'] = (packet['data'] as ByteBuffer).asUint8List();
-        return encodeBuffer(
-            packet, supportsBinary, callback, fromClient: fromClient);
+        return encodeBuffer(packet, supportsBinary, callback,
+            fromClient: fromClient);
       }
     }
 
@@ -102,14 +104,10 @@ class PacketParser {
     var data = packet['data'];
     // 'fromClient' is to check if the runtime is on server side or not,
     // because Dart server's websocket cannot send data with byte buffer.
-    final newData = new Uint8List(data.length + 1);
-    newData
-      ..setAll(0, [PacketTypeMap[packet['type']]]..length = 1)
-      ..setAll(1, data);
     if (fromClient) {
-      return callback(newData.buffer);
+      return callback(data.buffer);
     } else {
-      return callback(newData);
+      return callback(data);
     }
   }
 
@@ -121,100 +119,58 @@ class PacketParser {
    */
 
   static encodeBase64Packet(packet, callback) {
-    var message = '''b${PacketTypeMap[packet['type']]}''';
+    var message = 'b';
     message += base64.encode(packet.data.toString().codeUnits);
     return callback(message);
   }
 
-  static decodePacket(dynamic data, {binaryType, bool utf8decode}) {
-    var type;
-
-    // String data
-    if (data is String) {
-      type = data[0];
-
-      if (type == 'b') {
-        return decodeBase64Packet((data as String).substring(1), binaryType);
-      }
-
-      if (utf8decode == true) {
-        try {
-          data = utf8.decode(data.codeUnits);
-        } catch (e) {
-          return ERROR;
-        }
-      }
-      if ('${num.parse(type)}' != type ||
-          PacketTypeList[type = num.parse(type)] == null) {
-        return ERROR;
-      }
-
-      if (data.length > 1) {
-        return {'type': PacketTypeList[type], 'data': data.substring(1)};
-      } else {
-        return {'type': PacketTypeList[type]};
-      }
-    }
-
-    // Binary data
-    if (binaryType == 'arraybuffer' || data is ByteBuffer) {
-      // wrap Buffer/ArrayBuffer data into an Uint8Array
-      var intArray = (data as ByteBuffer).asUint8List();
-      type = intArray[0];
-      return {'type': PacketTypeList[type], 'data': intArray.sublist(0)};
-    }
-
-//    if (data instanceof ArrayBuffer) {
-//      data = arrayBufferToBuffer(data);
-//    }
-    type = data[0];
-    return {'type': PacketTypeList[type], 'data': data.sublist(1)};
-  }
-
-  static decodeBase64Packet(String msg, String binaryType) {
-    var type = PacketTypeList[msg.codeUnitAt(0)];
-    var data = base64.decode(utf8.decode(msg.substring(1).codeUnits));
+  static mapBinary(data, binaryType) {
+    final isBuffer = data is ByteBuffer;
     if (binaryType == 'arraybuffer') {
-      var abv = new Uint8List(data.length);
-      for (var i = 0; i < abv.length; i++) {
-        abv[i] = data[i];
-      }
-      return {'type': type, 'data': abv.buffer};
+      return isBuffer ? Uint8List.fromList(data) : data;
     }
-    return {'type': type, 'data': data};
+    return data;
   }
 
-  static hasBinary(List packets) {
-    return packets.any((map) {
-      final data = map['data'];
-      return data != null && data is ByteBuffer;
-    });
+  static decodePacket(dynamic encodedPacket, binaryType) {
+    if (encodedPacket is! String) {
+      return {'type': "message", 'data': mapBinary(encodedPacket, binaryType)};
+    }
+    var type = encodedPacket[0];
+
+    if (type == 'b') {
+      var buffer =
+          base64.decode(utf8.decode(encodedPacket.substring(1).codeUnits));
+      return {'type': "message", 'data': mapBinary(buffer, binaryType)};
+    }
+
+    var typeNumber = int.parse(type);
+    var pt = PacketTypeList[typeNumber];
+    if (pt == null) {
+      return ERROR_PACKET;
+    }
+
+    if (encodedPacket.length > 1) {
+      return {'type': pt, 'data': encodedPacket.substring(1)};
+    } else {
+      return {'type': pt};
+    }
   }
 
-  static encodePayload(List packets,
-      {bool supportsBinary = false, callback(_)}) {
-    if (supportsBinary && hasBinary(packets)) {
-      return encodePayloadAsBinary(packets, callback);
-    }
-
-    if (packets.isEmpty) {
-      return callback('0:');
-    }
-
-    var encodeOne = (packet, [doneCallback(err, _)]) {
-      encodePacket(packet, supportsBinary: supportsBinary, utf8encode: false,
-          callback: (message) {
-        doneCallback(null, _setLengthHeader(message));
+  static encodePayload(List packets, {callback(_)}) {
+    final length = packets.length;
+    final encodedPackets = []..length = length;
+    var count = 0;
+    var i = 0;
+    packets.forEach((packet) {
+      // force base64 encoding for binary packets
+      encodePacket(packet, supportsBinary: false, callback: (encodedPacket) {
+        encodedPackets[i++] = encodedPacket;
+        if (++count == length) {
+          callback(encodedPackets.join(SEPARATOR));
+        }
       });
-    };
-
-    map(packets, encodeOne, (err, results) {
-      return callback(results.join(''));
     });
-  }
-
-  static _setLengthHeader(message) {
-    return '${message.length}:$message';
   }
 
   /**
@@ -237,145 +193,16 @@ class PacketParser {
  * @api public
  */
 
-  static decodePayload(data,
-      {bool binaryType = false, callback(err, [foo, bar])}) {
-    if (data is! String) {
-      return decodePayloadAsBinary(data,
-          binaryType: binaryType, callback: callback);
-    }
-
-    if (data == '') {
-      // parser error - ignoring payload
-      return callback(Error, 0, 1);
-    }
-
-    var length = '', n, msg, packet;
-
-    for (var i = 0, l = data.length; i < l; i++) {
-      var chr = data[i];
-
-      if (chr != ':') {
-        length += chr;
-        continue;
+  static decodePayload(encodedPayload, binaryType) {
+    var encodedPackets = encodedPayload.split(SEPARATOR);
+    var packets = [];
+    for (var i = 0; i < encodedPackets.length; i++) {
+      var decodedPacket = decodePacket(encodedPackets[i], binaryType);
+      packets.add(decodedPacket);
+      if (decodedPacket['type'] == "error") {
+        break;
       }
-
-      if (length.isEmpty || (length != '${(n = num.tryParse(length))}')) {
-        // parser error - ignoring payload
-        return callback(ERROR, 0, 1);
-      }
-
-      msg = data.substring(i + 1, i + 1 + n);
-
-      if (length != '${msg.length}') {
-        // parser error - ignoring payload
-        return callback(ERROR, 0, 1);
-      }
-
-      if (msg.isNotEmpty) {
-        packet = decodePacket(msg, binaryType: binaryType, utf8decode: false);
-
-        if (ERROR['type'] == packet['type'] &&
-            ERROR['data'] == packet['data']) {
-          // parser error in individual packet - ignoring payload
-          return callback(ERROR, 0, 1);
-        }
-
-        var more = callback(packet, i + n, l);
-        if (false == more) return null;
-      }
-
-      // advance cursor
-      i += n;
-      length = '';
     }
-
-    if (length.isNotEmpty) {
-      // parser error - ignoring payload
-      return callback(ERROR, 0, 1);
-    }
-  }
-
-  static decodePayloadAsBinary(List<int> data,
-      {bool binaryType, callback(err, [foo, bar])}) {
-    var bufferTail = data;
-    var buffers = [];
-    var i;
-
-    while (bufferTail.length > 0) {
-      var strLen = '';
-      var isString = bufferTail[0] == 0;
-      for (i = 1;; i++) {
-        if (bufferTail[i] == 255) break;
-        // 310 = char length of Number.MAX_VALUE
-        if (strLen.length > 310) {
-          return callback(ERROR, 0, 1);
-        }
-        strLen += '${bufferTail[i]}';
-      }
-      bufferTail = bufferTail.skip(strLen.length + 1).toList();
-
-      var msgLength = int.parse(strLen);
-
-      dynamic msg = bufferTail.getRange(1, msgLength + 1);
-      if (isString == true) msg = new String.fromCharCodes(msg);
-      buffers.add(msg);
-      bufferTail = bufferTail.skip(msgLength + 1).toList();
-    }
-
-    var total = buffers.length;
-    for (i = 0; i < total; i++) {
-      var buffer = buffers[i];
-      callback(decodePacket(buffer, binaryType: binaryType, utf8decode: true),
-          i, total);
-    }
-  }
-
-  static encodePayloadAsBinary(List packets, [callback(_)]) {
-    if (packets.isEmpty) {
-      return callback(new Uint8List(0));
-    }
-
-    map(packets, encodeOneBinaryPacket, (err, results) {
-      var list = [];
-      results.forEach((e) => list.addAll(e));
-      return callback(list);
-    });
-  }
-
-  static encodeOneBinaryPacket(p, [doneCallback(err, _)]) {
-    var onBinaryPacketEncode = (packet) {
-      var encodingLength = '${packet.length}';
-      var sizeBuffer;
-
-      if (packet is String) {
-        sizeBuffer = new Uint8List(encodingLength.length + 2);
-        sizeBuffer[0] = 0; // is a string (not true binary = 0)
-        for (var i = 0; i < encodingLength.length; i++) {
-          sizeBuffer[i + 1] = int.parse(encodingLength[i]);
-        }
-        sizeBuffer[sizeBuffer.length - 1] = 255;
-        return doneCallback(
-            null, new List.from(sizeBuffer)..addAll(stringToBuffer(packet)));
-      }
-
-      sizeBuffer = new Uint8List(encodingLength.length + 2);
-      sizeBuffer[0] = 1; // is binary (true binary = 1)
-      for (var i = 0; i < encodingLength.length; i++) {
-        sizeBuffer[i + 1] = int.parse(encodingLength[i]);
-      }
-      sizeBuffer[sizeBuffer.length - 1] = 255;
-
-      doneCallback(null, new List.from(sizeBuffer)..addAll(packet));
-    };
-    encodePacket(p,
-        supportsBinary: true, utf8encode: true, callback: onBinaryPacketEncode);
-  }
-
-  static List<int> stringToBuffer(String string) {
-    var buf = new Uint8List(string.length);
-    for (var i = 0, l = string.length; i < l; i++) {
-      buf[i] = string.codeUnitAt(i);
-    }
-    return buf;
+    return packets;
   }
 }
