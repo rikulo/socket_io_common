@@ -11,16 +11,17 @@
  * Copyright (C) 2017 Potix Corporation. All Rights Reserved.
  */
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:socket_io_common/socket_io_common.dart';
 import 'package:socket_io_common/src/util/event_emitter.dart';
+
+import 'is_binary.dart';
 
 const int CONNECT = 0;
 const int DISCONNECT = 1;
 const int EVENT = 2;
 const int ACK = 3;
-const int ERROR = 4;
+const int CONNECT_ERROR = 4;
 const int BINARY_EVENT = 5;
 const int BINARY_ACK = 6;
 
@@ -35,7 +36,7 @@ List<String?> PacketTypes = <String?>[
   'DISCONNECT',
   'EVENT',
   'ACK',
-  'ERROR',
+  'CONNECT_ERROR',
   'BINARY_EVENT',
   'BINARY_ACK'
 ];
@@ -53,15 +54,18 @@ class Encoder {
    * @api public
    */
 
-  encode(obj, callback) {
-    _logger.fine('encoding packet $obj');
-
-    if (BINARY_EVENT == obj['type'] || BINARY_ACK == obj['type']) {
-      encodeAsBinary(obj, callback);
-    } else {
-      var encoding = encodeAsString(obj);
-      callback([encoding]);
+  encode(obj) {
+    if (_logger.isLoggable(Level.FINE)) {
+      _logger.fine('encoding packet $obj');
     }
+
+    if (EVENT == obj['type'] || ACK == obj['type']) {
+      if (hasBinary(obj)) {
+        obj['type'] = obj['type'] == EVENT ? BINARY_EVENT : BINARY_ACK;
+        return encodeAsBinary(obj);
+      }
+    }
+    return [encodeAsString(obj)];
   }
 
   /**
@@ -97,7 +101,9 @@ class Encoder {
       str += json.encode(obj['data']);
     }
 
-    _logger.fine('encoded $obj as $str');
+    if (_logger.isLoggable(Level.FINE)) {
+      _logger.fine('encoded $obj as $str');
+    }
     return str;
   }
 
@@ -111,18 +117,13 @@ class Encoder {
  * @api private
  */
 
-  static encodeAsBinary(obj, callback) {
-    var writeEncoding = (bloblessData) {
-      var deconstruction = Binary.deconstructPacket(bloblessData);
-      var pack = encodeAsString(deconstruction['packet']);
-      var buffers = deconstruction['buffers'];
+  static encodeAsBinary(obj) {
+    final deconstruction = Binary.deconstructPacket(obj);
+    final pack = encodeAsString(deconstruction['packet']);
+    final buffers = deconstruction['buffers'];
 
-      // add packet info to beginning of data list
-      callback(<dynamic>[pack]..addAll(buffers)); // write all the buffers
-    };
-//
-//  binary.removeBlobs(obj, writeEncoding);
-    writeEncoding(obj);
+    // add packet info to beginning of data list
+    return <dynamic>[pack]..addAll(buffers); // write all the buffers
   }
 }
 
@@ -158,9 +159,7 @@ class Decoder extends EventEmitter {
         // non-binary full packet
         this.emit('decoded', packet);
       }
-    } else if ((obj != null && obj is ByteBuffer) ||
-        obj is Uint8List ||
-        obj is Map && obj['base64'] != null) {
+    } else if (isBinary(obj) || obj is Map && obj['base64'] != null) {
       // raw binary data
       if (this.reconstructor == null) {
         throw new UnsupportedError(
@@ -192,15 +191,15 @@ class Decoder extends EventEmitter {
     // look up type
     var p = <String, dynamic>{'type': num.parse(str[0])};
 
-    if (null == PacketTypes[p['type']]) return error();
+    if (null == PacketTypes[p['type']]) {
+      throw new UnsupportedError("unknown packet type " + p['type']);
+    }
 
     // look up attachments if type binary
     if (BINARY_EVENT == p['type'] || BINARY_ACK == p['type']) {
-      var buf = '';
-      while (str[++i] != '-') {
-        buf += str[i];
-        if (i == endLen) break;
-      }
+      final start = i + 1;
+      while (str[++i] != '-' && i != str.length) {}
+      var buf = str.substring(start, i);
       if (buf != '${num.tryParse(buf) ?? -1}' || str[i] != '-') {
         throw new ArgumentError('Illegal attachments');
       }
@@ -208,14 +207,14 @@ class Decoder extends EventEmitter {
     }
 
     // look up namespace (if any)
-    if (str.length > i + 1 && '/' == str[i + 1]) {
-      p['nsp'] = '';
+    if (i < endLen - 1 && '/' == str[i + 1]) {
+      var start = i + 1;
       while (++i > 0) {
         var c = str[i];
-        if (',' == c) break;
-        p['nsp'] += c;
-        if (i == endLen) break;
+        if ("," == c) break;
+        if (i == str.length) break;
       }
+      p['nsp'] = str.substring(start, i);
     } else {
       p['nsp'] = '/';
     }
@@ -223,35 +222,58 @@ class Decoder extends EventEmitter {
     // look up id
     var next = i < endLen - 1 ? str[i + 1] : null;
     if (next?.isNotEmpty == true && '${num.tryParse(next!)}' == next) {
-      p['id'] = '';
+      var start = i + 1;
       while (++i > 0) {
-        var c = str[i];
-        if ('${num.tryParse(c)}' != c) {
+        var c = str.length < i ? str[i] : null;
+        if ('${num.tryParse(c!)}' != c) {
           --i;
           break;
         }
-        p['id'] += str[i];
-        if (i == endLen - 1) break;
+        if (i == str.length) break;
       }
-//    p['id'] = p['id'];
+      p['id'] = int.tryParse(str.substring(start, i + 1));
     }
 
     // look up json data
     if (i < endLen - 1 && str[++i].isNotEmpty == true) {
-      p = tryParse(p, str.substring(i));
+      var payload = tryParse(str.substring(i));
+      if (isPayloadValid(p['type'], payload)) {
+        p['data'] = payload;
+      } else {
+        throw new UnsupportedError("invalid payload");
+      }
     }
 
 //    debug('decoded %s as %j', str, p);
     return p;
   }
 
-  static tryParse(p, str) {
+  static tryParse(str) {
     try {
-      p['data'] = json.decode(str);
+      return json.decode(str);
     } catch (e) {
-      return error();
+      return false;
     }
-    return p;
+  }
+
+  static isPayloadValid(type, payload) {
+    switch (type) {
+      case CONNECT:
+        return payload == null || payload is Map || payload is List;
+      case DISCONNECT:
+        return payload == null;
+      case CONNECT_ERROR:
+        return payload is String ||
+            payload == null ||
+            payload is Map ||
+            payload is List;
+      case EVENT:
+      case BINARY_EVENT:
+        return payload is List && payload[0] is String;
+      case ACK:
+      case BINARY_ACK:
+        return payload is List;
+    }
   }
 
 /**
@@ -296,7 +318,8 @@ class BinaryReconstructor {
     this.buffers.add(binData);
     if (this.buffers.length == this.reconPack['attachments']) {
       // done with buffer list
-      var packet = Binary.reconstructPacket(this.reconPack, this.buffers.cast<List<int>>());
+      var packet = Binary.reconstructPacket(
+          this.reconPack, this.buffers.cast<List<int>>());
       this.finishedReconstruction();
       return packet;
     }
@@ -311,8 +334,4 @@ class BinaryReconstructor {
     this.reconPack.clear();
     this.buffers = [];
   }
-}
-
-Map error() {
-  return {'type': ERROR, 'data': 'parser error'};
 }

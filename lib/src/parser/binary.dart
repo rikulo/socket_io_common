@@ -22,7 +22,7 @@ class Binary {
   static Object? _deconstructPacket(Object? data, List buffers) {
     if (data == null) return null;
 
-    if (data is Uint8List) {
+    if (data is Uint8List || data is ByteBuffer) {
       final placeholder = {KEY_PLACEHOLDER: true, KEY_NUM: buffers.length};
       buffers.add(data);
       return placeholder;
@@ -47,7 +47,7 @@ class Binary {
 
   static Map reconstructPacket(Map packet, List<List<int>> buffers) {
     packet['data'] = _reconstructPacket(packet['data'], buffers);
-    packet['attachments'] = -1;
+    packet['attachments'] = -1; // no longer useful
     return packet;
   }
 
