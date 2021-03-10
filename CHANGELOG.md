@@ -1,3 +1,7 @@
+## 2.0.0-beta.1-nullsafety.0
+
+Support null safety on 2.0.0-beta
+
 ## 2.0.0-beta.1
 
 **Bug fix:**
