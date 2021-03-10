@@ -224,7 +224,7 @@ class Decoder extends EventEmitter {
     if (next?.isNotEmpty == true && '${num.tryParse(next!)}' == next) {
       var start = i + 1;
       while (++i > 0) {
-        var c = str.length < i ? str[i] : null;
+        var c = str.length > i ? str[i] : null;
         if ('${num.tryParse(c!)}' != c) {
           --i;
           break;
