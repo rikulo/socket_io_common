@@ -1,3 +1,9 @@
+## 2.0.0-beta.1-nullsafety.1
+
+**Bug fix:**
+
+* [socket.io-client-dart#167](https://github.com/rikulo/socket.io-client-dart/issues/167) Message handler doesn't receive messages
+
 ## 2.0.0-beta.1-nullsafety.0
 
 Support null safety on 2.0.0-beta

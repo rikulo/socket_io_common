@@ -299,7 +299,7 @@ class Decoder extends EventEmitter {
  * @api private
  */
 class BinaryReconstructor {
-  late Map reconPack;
+  Map? reconPack;
   List buffers = [];
   BinaryReconstructor(packet) {
     this.reconPack = packet;
@@ -316,10 +316,10 @@ class BinaryReconstructor {
    */
   takeBinaryData(binData) {
     this.buffers.add(binData);
-    if (this.buffers.length == this.reconPack['attachments']) {
+    if (this.buffers.length == this.reconPack!['attachments']) {
       // done with buffer list
       var packet = Binary.reconstructPacket(
-          this.reconPack, this.buffers.cast<List<int>>());
+          this.reconPack!, this.buffers.cast<List<int>>());
       this.finishedReconstruction();
       return packet;
     }
@@ -331,7 +331,7 @@ class BinaryReconstructor {
    * @api private
    */
   void finishedReconstruction() {
-    this.reconPack.clear();
+    this.reconPack = null;
     this.buffers = [];
   }
 }
