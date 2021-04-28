@@ -24,12 +24,14 @@ class EventEmitter {
   /**
    * Mapping of events to a list of event handlers
    */
-  Map<String, List<EventHandler>> _events = new HashMap<String, List<EventHandler>>();
+  Map<String, List<EventHandler>> _events =
+      new HashMap<String, List<EventHandler>>();
 
   /**
    * Mapping of events to a list of one-time event handlers
    */
-  Map<String, List<EventHandler>> _eventsOnce = new HashMap<String, List<EventHandler>>();
+  Map<String, List<EventHandler>> _eventsOnce =
+      new HashMap<String, List<EventHandler>>();
 
   /**
    * Constructor

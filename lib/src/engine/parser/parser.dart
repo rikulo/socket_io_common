@@ -17,7 +17,6 @@ import 'dart:typed_data';
 
 import 'package:socket_io_common/src/engine/parser/wtf8.dart';
 
-
 // Protocol version
 final protocol = 3;
 
@@ -62,17 +61,18 @@ class PacketParser {
 
     if (packet['data'] != null) {
       if (packet['data'] is Uint8List) {
-        return encodeBuffer(
-            packet, supportsBinary, callback, fromClient: fromClient);
-      } else
-      if (packet['data'] is Map && (packet['data']['buffer'] != null && packet['data']['buffer'] is ByteBuffer)) {
+        return encodeBuffer(packet, supportsBinary, callback,
+            fromClient: fromClient);
+      } else if (packet['data'] is Map &&
+          (packet['data']['buffer'] != null &&
+              packet['data']['buffer'] is ByteBuffer)) {
         packet['data'] = (packet['data']['buffer'] as ByteBuffer).asUint8List();
-        return encodeBuffer(
-            packet, supportsBinary, callback, fromClient: fromClient);
+        return encodeBuffer(packet, supportsBinary, callback,
+            fromClient: fromClient);
       } else if (packet['data'] is ByteBuffer) {
         packet['data'] = (packet['data'] as ByteBuffer).asUint8List();
-        return encodeBuffer(
-            packet, supportsBinary, callback, fromClient: fromClient);
+        return encodeBuffer(packet, supportsBinary, callback,
+            fromClient: fromClient);
       }
     }
 
@@ -355,7 +355,8 @@ class PacketParser {
           sizeBuffer[i + 1] = int.parse(encodingLength[i]);
         }
         sizeBuffer[sizeBuffer.length - 1] = 255;
-        return doneCallback(new List.from(sizeBuffer)..addAll(stringToBuffer(packet)));
+        return doneCallback(
+            new List.from(sizeBuffer)..addAll(stringToBuffer(packet)));
       }
 
       sizeBuffer = new Uint8List(encodingLength.length + 2);
