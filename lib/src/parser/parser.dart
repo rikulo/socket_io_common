@@ -16,8 +16,6 @@ import 'package:logging/logging.dart';
 import 'package:socket_io_common/socket_io_common.dart';
 import 'package:socket_io_common/src/util/event_emitter.dart';
 
-import '../../socket_io_common.dart';
-
 const int CONNECT = 0;
 const int DISCONNECT = 1;
 const int EVENT = 2;
