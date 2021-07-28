@@ -16,6 +16,8 @@ import 'package:logging/logging.dart';
 import 'package:socket_io_common/socket_io_common.dart';
 import 'package:socket_io_common/src/util/event_emitter.dart';
 
+import '../../socket_io_common.dart';
+
 const int CONNECT = 0;
 const int DISCONNECT = 1;
 const int EVENT = 2;
@@ -277,7 +279,7 @@ class Decoder extends EventEmitter {
  * @api private
  */
 class BinaryReconstructor {
-  late Map reconPack;
+  late Map? reconPack;
   List buffers = [];
   BinaryReconstructor(packet) {
     this.reconPack = packet;
@@ -294,14 +296,12 @@ class BinaryReconstructor {
    */
   takeBinaryData(binData) {
     this.buffers.add(binData);
-    if (this.buffers.length == this.reconPack['attachments']) {
+    if (this.buffers.length == this.reconPack!['attachments']) {
       // done with buffer list
-<<<<<<< HEAD
-      var packet = Binary.reconstructPacket(this.reconPack, this.buffers.cast<List<int>>());
-=======
+
       var packet = Binary.reconstructPacket(
-          this.reconPack, this.buffers.cast<List<int>>());
->>>>>>> 6cdb826599b9ac06993b74a8e686fa64d9c329e1
+          this.reconPack!, this.buffers.cast<List<int>>());
+
       this.finishedReconstruction();
       return packet;
     }
@@ -313,7 +313,7 @@ class BinaryReconstructor {
    * @api private
    */
   void finishedReconstruction() {
-    this.reconPack.clear();
+    this.reconPack = null;
     this.buffers = [];
   }
 }
