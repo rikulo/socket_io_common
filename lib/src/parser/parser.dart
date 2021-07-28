@@ -30,7 +30,7 @@ const int BINARY_ACK = 6;
  * @api public
  */
 
-List<String> PacketTypes = <String>[
+List<String?> PacketTypes = <String?>[
   'CONNECT',
   'DISCONNECT',
   'EVENT',
@@ -118,7 +118,7 @@ class Encoder {
       var buffers = deconstruction['buffers'];
 
       // add packet info to beginning of data list
-      callback([pack]..addAll(buffers)); // write all the buffers
+      callback(<dynamic>[pack]..addAll(buffers)); // write all the buffers
     };
 //
 //  binary.removeBlobs(obj, writeEncoding);
@@ -222,11 +222,11 @@ class Decoder extends EventEmitter {
 
     // look up id
     var next = i < endLen - 1 ? str[i + 1] : null;
-    if (next?.isNotEmpty == true && '${num.tryParse(next)}' == next) {
+    if (next?.isNotEmpty == true && '${num.tryParse(next!)}' == next) {
       p['id'] = '';
       while (++i > 0) {
         var c = str[i];
-        if (null == c || '${num.tryParse(c)}' != c) {
+        if ('${num.tryParse(c)}' != c) {
           --i;
           break;
         }
@@ -237,7 +237,7 @@ class Decoder extends EventEmitter {
     }
 
     // look up json data
-    if (i < endLen - 1 && str[++i]?.isNotEmpty == true) {
+    if (i < endLen - 1 && str[++i].isNotEmpty == true) {
       p = tryParse(p, str.substring(i));
     }
 
@@ -277,11 +277,10 @@ class Decoder extends EventEmitter {
  * @api private
  */
 class BinaryReconstructor {
-  Map reconPack;
-  List buffers;
+  late Map reconPack;
+  List buffers = [];
   BinaryReconstructor(packet) {
     this.reconPack = packet;
-    this.buffers = [];
   }
 
   /**
@@ -297,7 +296,12 @@ class BinaryReconstructor {
     this.buffers.add(binData);
     if (this.buffers.length == this.reconPack['attachments']) {
       // done with buffer list
+<<<<<<< HEAD
       var packet = Binary.reconstructPacket(this.reconPack, this.buffers.cast<List<int>>());
+=======
+      var packet = Binary.reconstructPacket(
+          this.reconPack, this.buffers.cast<List<int>>());
+>>>>>>> 6cdb826599b9ac06993b74a8e686fa64d9c329e1
       this.finishedReconstruction();
       return packet;
     }
@@ -309,7 +313,7 @@ class BinaryReconstructor {
    * @api private
    */
   void finishedReconstruction() {
-    this.reconPack = null;
+    this.reconPack.clear();
     this.buffers = [];
   }
 }

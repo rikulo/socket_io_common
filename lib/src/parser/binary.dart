@@ -10,7 +10,7 @@ class Binary {
   static final String KEY_NUM = "num";
 
   static Map deconstructPacket(Map packet) {
-    List<int> buffers = [];
+    List buffers = [];
 
     packet['data'] = _deconstructPacket(packet['data'], buffers);
     packet['attachments'] = buffers.length;
@@ -19,7 +19,7 @@ class Binary {
     return result;
   }
 
-  static Object _deconstructPacket(Object data, List buffers) {
+  static Object? _deconstructPacket(Object? data, List buffers) {
     if (data == null) return null;
 
     if (data is Uint8List) {
@@ -51,7 +51,7 @@ class Binary {
     return packet;
   }
 
-  static Object _reconstructPacket(Object data, List<List<int>> buffers) {
+  static Object? _reconstructPacket(Object data, List<List<int>> buffers) {
     if (data is List) {
       final _data = data;
       int i = 0;
@@ -62,8 +62,8 @@ class Binary {
     } else if (data is Map) {
       final _data = data;
       if ('${_data[KEY_PLACEHOLDER]}'.toLowerCase() == 'true') {
-        final knum = _data[KEY_NUM];
-        int num = knum is int ? knum : int.parse(_data[KEY_NUM]).toInt();
+        final knum = _data[KEY_NUM]!;
+        int num = knum is int ? knum : int.parse(knum).toInt();
         return num >= 0 && num < buffers.length ? buffers[num] : null;
       }
       data.forEach((key, value) {
