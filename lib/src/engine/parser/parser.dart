@@ -45,7 +45,7 @@ const Map<String, int> PacketTypeMap = const <String, int>{
 class PacketParser {
   static const ERROR = const {'type': 'error', 'data': 'parser error'};
   static String? encodePacket(Map packet,
-      {dynamic? supportsBinary,
+      {dynamic supportsBinary,
       utf8encode = false,
       required callback(_),
       bool fromClient = false}) {

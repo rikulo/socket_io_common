@@ -1,3 +1,9 @@
+## 1.0.1
+
+**Bug fix:**
+
+* [socket.io-client-dart#214](https://github.com/rikulo/socket.io-client-dart/issues/214) 1.0.1 _placeholder binary data isn't received correctly
+
 ## 1.0.0
 
 **Features:**
