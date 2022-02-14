@@ -116,6 +116,7 @@ class EventEmitter {
 
   /**
    * This function attempts to unbind the [handler].
+   * If the given [handler] is null, this function unbinds all any event handlers.
    */
   void offAny([AnyEventHandler? handler]) {
     if (handler != null) {

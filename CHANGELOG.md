@@ -1,3 +1,8 @@
+## 2.0.0
+
+** Features: **
+* [socket_io_common#5](https://github.com/rikulo/socket_io_common/pull/5) Added listening any event functionality
+
 ## 2.0.0-beta.1-nullsafety.1
 
 **Bug fix:**

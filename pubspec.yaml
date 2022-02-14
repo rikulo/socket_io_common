@@ -1,12 +1,12 @@
 name: socket_io_common
 description: Socket.io common parser library.
-version: 2.0.0-beta.1-nullsafety.1
+version: 2.0.0
 homepage: https://www.zkoss.org
 repository: https://github.com/rikulo/socket_io_common
 issue_tracker: https://github.com/rikulo/socket_io_common/issues
 
 environment:
-  sdk: '>=2.12.0-0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
-  logging: '^1.0.0-nullsafety.0'
+  logging: '^1.0.1'
