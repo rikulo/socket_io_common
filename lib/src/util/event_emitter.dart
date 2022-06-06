@@ -18,6 +18,11 @@ import 'dart:collection' show HashMap;
 typedef dynamic EventHandler<T>(T data);
 
 /**
+ * Handler type for handling the event emitted by an [AnyEventHandler].
+ */
+typedef dynamic AnyEventHandler<T>(String event, T data);
+
+/**
  * Generic event emitting and handling.
  */
 class EventEmitter {
@@ -32,6 +37,11 @@ class EventEmitter {
    */
   Map<String, List<EventHandler>> _eventsOnce =
       new HashMap<String, List<EventHandler>>();
+
+  /**
+   * List of handlers that listen every event
+   */
+  List<AnyEventHandler> _eventsAny = [];
 
   /**
    * Constructor
@@ -54,6 +64,10 @@ class EventEmitter {
     this._eventsOnce.remove(event)?.forEach((EventHandler handler) {
       handler(data);
     });
+
+    this._eventsAny.forEach((AnyEventHandler handler) {
+      handler(event, data);
+    });
   }
 
   /**
@@ -72,6 +86,13 @@ class EventEmitter {
   void once(String event, EventHandler handler) {
     this._eventsOnce.putIfAbsent(event, () => <EventHandler>[]);
     this._eventsOnce[event]!.add(handler);
+  }
+
+  /**
+   * This function binds the [handler] as a listener to any event
+   */
+  void onAny(AnyEventHandler handler) {
+    this._eventsAny.add(handler);
   }
 
   /**
@@ -94,11 +115,23 @@ class EventEmitter {
   }
 
   /**
+   * This function attempts to unbind the [handler].
+   */
+  void offAny([AnyEventHandler? handler]) {
+    if (handler != null) {
+      this._eventsAny.remove(handler);
+    } else {
+      this._eventsAny.clear();
+    }
+  }
+
+  /**
    * This function unbinds all the handlers for all the events.
    */
   void clearListeners() {
     this._events = new HashMap<String, List<EventHandler>>();
     this._eventsOnce = new HashMap<String, List<EventHandler>>();
+    this._eventsAny.clear();
   }
 
   /**
