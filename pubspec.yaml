@@ -6,7 +6,8 @@ repository: https://github.com/rikulo/socket_io_common
 issue_tracker: https://github.com/rikulo/socket_io_common/issues
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  # sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.17.0 <3.0.0'
 
 dependencies:
   logging: '^1.0.1'
