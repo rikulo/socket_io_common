@@ -210,9 +210,9 @@ class Decoder extends EventEmitter {
     if (i < endLen - 1 && '/' == str[i + 1]) {
       var start = i + 1;
       while (++i > 0) {
+        if (i == str.length) break;
         var c = str[i];
         if ("," == c) break;
-        if (i == str.length) break;
       }
       p['nsp'] = str.substring(start, i);
     } else {
