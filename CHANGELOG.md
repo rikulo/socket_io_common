@@ -1,3 +1,8 @@
+## 2.0.2
+
+**Bug fix:**
+* [socket_io_common#8](https://github.com/rikulo/socket_io_common/pull/8) _fixed RangeError
+
 ## 2.0.1
 
 **Bug fix:**
