@@ -1,3 +1,8 @@
+## 2.0.1
+
+**Bug fix:**
+* [socket.io-client-dart#294](https://github.com/rikulo/socket.io-client-dart/issues/294) _reconstructPacket
+
 ## 2.0.0
 
 **Features:**

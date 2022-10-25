@@ -51,7 +51,7 @@ class Binary {
     return packet;
   }
 
-  static Object? _reconstructPacket(Object data, List<List<int>> buffers) {
+  static Object? _reconstructPacket(Object? data, List<List<int>> buffers) {
     if (data is List) {
       final _data = data;
       int i = 0;
