@@ -209,8 +209,8 @@ class Decoder extends EventEmitter {
     // look up namespace (if any)
     if (i < endLen - 1 && '/' == str[i + 1]) {
       var start = i + 1;
-      while (++i > 0 && str.substring(i + 1, i + 1) != null) {
-        if (i < endLen - 1) break;
+      while (++i > 0 && str.substring(i, i) != null) {
+        if (i > (endLen - 1)) break;
         var c = str[i];
         if ("," == c) break;
         if (i == str.length) break;
