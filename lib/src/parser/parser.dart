@@ -209,10 +209,11 @@ class Decoder extends EventEmitter {
     // look up namespace (if any)
     if (i < endLen - 1 && '/' == str[i + 1]) {
       var start = i + 1;
-      while (++i > 0) {
-        if (i == str.length) break;
+      while (++i > 0 && str.substring(i + 1, i + 1) != null) {
+        if (i < endLen - 1) break;
         var c = str[i];
         if ("," == c) break;
+        if (i == str.length) break;
       }
       p['nsp'] = str.substring(start, i);
     } else {
@@ -235,8 +236,12 @@ class Decoder extends EventEmitter {
     }
 
     // look up json data
-    if (i < endLen - 1 && str[++i].isNotEmpty == true) {
-      var payload = tryParse(str.substring(i));
+    if (i < endLen - 1 && str[++i].isNotEmpty == true && str.indexOf(',') != -1) {
+      var payload = tryParse(
+          str.indexOf(',') != -1
+          ? str.substring(str.indexOf(',') + 1)
+            : str.substring(i)
+      );
       if (isPayloadValid(p['type'], payload)) {
         p['data'] = payload;
       } else {
