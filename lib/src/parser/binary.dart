@@ -45,13 +45,13 @@ class Binary {
     return data;
   }
 
-  static Map reconstructPacket(Map packet, List<List<int>> buffers) {
+  static Map reconstructPacket(Map packet, List<dynamic> buffers) {
     packet['data'] = _reconstructPacket(packet['data'], buffers);
     packet['attachments'] = -1; // no longer useful
     return packet;
   }
 
-  static Object? _reconstructPacket(Object? data, List<List<int>> buffers) {
+  static Object? _reconstructPacket(Object? data, List<dynamic> buffers) {
     if (data is List) {
       final _data = data;
       int i = 0;

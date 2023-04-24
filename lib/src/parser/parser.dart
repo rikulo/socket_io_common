@@ -319,7 +319,7 @@ class BinaryReconstructor {
     if (this.buffers.length == this.reconPack!['attachments']) {
       // done with buffer list
       var packet = Binary.reconstructPacket(
-          this.reconPack!, this.buffers.cast<List<int>>());
+          this.reconPack!, this.buffers);
       this.finishedReconstruction();
       return packet;
     }
