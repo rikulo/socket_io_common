@@ -73,9 +73,10 @@ class EventEmitter {
   /**
    * This function binds the [handler] as a listener to the [event]
    */
-  void on(String event, EventHandler handler) {
+  void Function() on(String event, EventHandler handler) {
     this._events.putIfAbsent(event, () => <EventHandler>[]);
     this._events[event]!.add(handler);
+    return () => off(event, handler);
   }
 
   /**
