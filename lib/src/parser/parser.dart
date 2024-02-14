@@ -1,15 +1,13 @@
-/**
- * parser.dart
- *
- * Purpose:
- *
- * Description:
- *
- * History:
- *    20/02/2017, Created by jumperchen
- *
- * Copyright (C) 2017 Potix Corporation. All Rights Reserved.
- */
+/// parser.dart
+///
+/// Purpose:
+///
+/// Description:
+///
+/// History:
+///    20/02/2017, Created by jumperchen
+///
+/// Copyright (C) 2017 Potix Corporation. All Rights Reserved.
 import 'dart:convert';
 import 'package:logging/logging.dart';
 import 'package:socket_io_common/socket_io_common.dart';
@@ -25,12 +23,17 @@ const int CONNECT_ERROR = 4;
 const int BINARY_EVENT = 5;
 const int BINARY_ACK = 6;
 
-/**
- * A socket.io Encoder instance
- *
- * @api public
- */
+/// These strings must not be used as event names, as they have a special meaning.
+const List<String> RESERVED_EVENTS = [
+  "connect", // used on the client side
+  "connect_error", // used on the client side
+  "disconnect", // used on both sides
+  "disconnecting", // used on the server side
+  "newListener", // used by the Node.js EventEmitter
+  "removeListener", // used by the Node.js EventEmitter
+];
 
+/// A socket.io Encoder instance
 List<String?> PacketTypes = <String?>[
   'CONNECT',
   'DISCONNECT',
@@ -44,16 +47,8 @@ List<String?> PacketTypes = <String?>[
 class Encoder {
   static final Logger _logger = new Logger('socket_io:parser.Encoder');
 
-  /**
-   * Encode a packet as a single string if non-binary, or as a
-   * buffer sequence, depending on packet type.
-   *
-   * @param {Object} obj - packet object
-   * @param {Function} callback - function to handle encodings (likely engine.write)
-   * @return Calls callback with Array of encodings
-   * @api public
-   */
-
+  /// Encode a packet as a single string if non-binary, or as a
+  /// buffer sequence, depending on packet type.
   encode(obj) {
     if (_logger.isLoggable(Level.FINE)) {
       _logger.fine('encoding packet $obj');
@@ -68,14 +63,7 @@ class Encoder {
     return [encodeAsString(obj)];
   }
 
-  /**
-   * Encode packet as string.
-   *
-   * @param {Object} packet
-   * @return {String} encoded
-   * @api private
-   */
-
+  /// Encode packet as string.
   static String encodeAsString(obj) {
     // first is type
     var str = '${obj['type']}';
@@ -107,16 +95,9 @@ class Encoder {
     return str;
   }
 
-/**
- * Encode packet as 'buffer sequence' by removing blobs, and
- * deconstructing packet into object with placeholders and
- * a list of buffers.
- *
- * @param {Object} packet
- * @return {Buffer} encoded
- * @api private
- */
-
+  /// Encode packet as 'buffer sequence' by removing blobs, and
+  /// deconstructing packet into object with placeholders and
+  /// a list of buffers.
   static encodeAsBinary(obj) {
     final deconstruction = Binary.deconstructPacket(obj);
     final pack = encodeAsString(deconstruction['packet']);
@@ -127,37 +108,29 @@ class Encoder {
   }
 }
 
-/**
- * A socket.io Decoder instance
- *
- * @return {Object} decoder
- * @api public
- */
+/// A socket.io Decoder instance
 class Decoder extends EventEmitter {
-  dynamic reconstructor = null;
+  BinaryReconstructor? reconstructor = null;
 
-  /**
-   * Decodes an ecoded packet string into packet JSON.
-   *
-   * @param {String} obj - encoded packet
-   * @return {Object} packet
-   * @api public
-   */
+  /// Decodes an encoded packet string into packet JSON.
   add(obj) {
     var packet;
     if (obj is String) {
+      if (reconstructor != null) {
+        throw Exception("got plaintext data when reconstructing a packet");
+      }
       packet = decodeString(obj);
       if (BINARY_EVENT == packet['type'] || BINARY_ACK == packet['type']) {
         // binary packet's json
         this.reconstructor = new BinaryReconstructor(packet);
 
         // no attachments, labeled binary but no binary data to follow
-        if (this.reconstructor.reconPack['attachments'] == 0) {
-          this.emit('decoded', packet);
+        if (packet['attachments'] == 0) {
+          this.emitReserved('decoded', packet);
         }
       } else {
         // non-binary full packet
-        this.emit('decoded', packet);
+        this.emitReserved('decoded', packet);
       }
     } else if (isBinary(obj) || obj is Map && obj['base64'] != null) {
       // raw binary data
@@ -165,11 +138,11 @@ class Decoder extends EventEmitter {
         throw new UnsupportedError(
             'got binary data when not reconstructing a packet');
       } else {
-        packet = this.reconstructor.takeBinaryData(obj);
+        packet = this.reconstructor!.takeBinaryData(obj);
         if (packet != null) {
           // received final buffer
           this.reconstructor = null;
-          this.emit('decoded', packet);
+          this.emitReserved('decoded', packet);
         }
       }
     } else {
@@ -177,14 +150,7 @@ class Decoder extends EventEmitter {
     }
   }
 
-  /**
-   * Decode a packet String (JSON data)
-   *
-   * @param {String} str
-   * @return {Object} packet
-   * @api private
-   */
-
+  /// Decode a packet String (JSON data)
   static decodeString(String str) {
     var i = 0;
     var endLen = str.length - 1;
@@ -259,79 +225,82 @@ class Decoder extends EventEmitter {
   static isPayloadValid(type, payload) {
     switch (type) {
       case CONNECT:
-        return payload == null || payload is Map || payload is List;
+        return isObject(payload);
       case DISCONNECT:
         return payload == null;
       case CONNECT_ERROR:
-        return payload is String ||
-            payload == null ||
-            payload is Map ||
-            payload is List;
+        return payload is String || isObject(payload);
       case EVENT:
       case BINARY_EVENT:
-        return payload is List && payload[0] is String;
+        return payload is List &&
+            payload.isNotEmpty &&
+            ((payload[0] is int) ||
+                (payload[0] is String &&
+                    !RESERVED_EVENTS.contains(payload[0])));
       case ACK:
       case BINARY_ACK:
         return payload is List;
     }
   }
 
-/**
- * Deallocates a parser's resources
- *
- * @api public
- */
-
+  /// Deallocates a parser's resources
   destroy() {
     if (this.reconstructor != null) {
-      this.reconstructor.finishedReconstruction();
+      this.reconstructor!.finishedReconstruction();
+      this.reconstructor = null;
     }
   }
 }
 
-/**
- * A manager of a binary event's 'buffer sequence'. Should
- * be constructed whenever a packet of type BINARY_EVENT is
- * decoded.
- *
- * @param {Object} packet
- * @return {BinaryReconstructor} initialized reconstructor
- * @api private
- */
+/// A manager of a binary event's 'buffer sequence'. Should
+/// be constructed whenever a packet of type BINARY_EVENT is
+/// decoded.
 class BinaryReconstructor {
   Map? reconPack;
   List buffers = [];
+
   BinaryReconstructor(packet) {
     this.reconPack = packet;
   }
 
-  /**
-   * Method to be called when binary data received from connection
-   * after a BINARY_EVENT packet.
-   *
-   * @param {Buffer | ArrayBuffer} binData - the raw binary data received
-   * @return {null | Object} returns null if more binary data is expected or
-   *   a reconstructed packet object if all buffers have been received.
-   * @api private
-   */
+  /// Method to be called when binary data received from connection
+  /// after a BINARY_EVENT packet.
   takeBinaryData(binData) {
     this.buffers.add(binData);
     if (this.buffers.length == this.reconPack!['attachments']) {
       // done with buffer list
-      var packet = Binary.reconstructPacket(
-          this.reconPack!, this.buffers);
+      var packet = Binary.reconstructPacket(this.reconPack!, this.buffers);
       this.finishedReconstruction();
       return packet;
     }
     return null;
   }
 
-  /** Cleans up binary packet reconstruction variables.
-   *
-   * @api private
-   */
+  /// Cleans up binary packet reconstruction variables.
   void finishedReconstruction() {
     this.reconPack = null;
     this.buffers = [];
   }
+}
+
+bool isNamespaceValid(nsp) {
+  return nsp is String;
+}
+
+bool isInteger(dynamic value) {
+  return value is int;
+}
+
+bool isAckIdValid(dynamic id) {
+  return id == null || isInteger(id);
+}
+
+bool isObject(payload) {
+  return payload == null || payload is Map || payload is List;
+}
+
+bool isPacketValid(packet) {
+  return isNamespaceValid(packet['nsp']) &&
+      isAckIdValid(packet['id']) &&
+      Decoder.isPayloadValid(packet['type'], packet['data']);
 }

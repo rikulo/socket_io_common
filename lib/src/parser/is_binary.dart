@@ -4,8 +4,14 @@
 
 import 'dart:typed_data';
 
+bool isView(Object obj) {
+  // Dart's typed data library provides a way to work with binary data.
+  // Here, we check if obj is a subtype of TypedData, which includes views of ByteBuffers.
+  return obj is TypedData;
+}
+
 bool isBinary(obj) {
-  return (obj != null && obj is ByteBuffer) || obj is Uint8List;
+  return (obj != null && obj is ByteBuffer) || isView(obj);
 }
 
 bool hasBinary(obj, [bool toJSON = false]) {

@@ -15,8 +15,7 @@ class Binary {
     packet['data'] = _deconstructPacket(packet['data'], buffers);
     packet['attachments'] = buffers.length;
 
-    final result = {'packet': packet, 'buffers': buffers};
-    return result;
+    return {'packet': packet, 'buffers': buffers};
   }
 
   static Object? _deconstructPacket(Object? data, List buffers) {
@@ -52,6 +51,23 @@ class Binary {
   }
 
   static Object? _reconstructPacket(Object? data, List<dynamic> buffers) {
+    // Check if data is null or doesn't exist
+    if (data == null) return data;
+
+    // Check if data is marked as a placeholder and process accordingly
+    if (data is Map && data[KEY_PLACEHOLDER] == true) {
+      bool isIndexValid = data[KEY_NUM] is int &&
+          data[KEY_NUM] >= 0 &&
+          data[KEY_NUM] < buffers.length;
+      if (isIndexValid) {
+        // Return the appropriate buffer
+        return buffers[data[KEY_NUM]];
+      } else {
+        // Throw an error if the index is not valid
+        throw FormatException("Illegal attachments");
+      }
+    }
+
     if (data is List) {
       final _data = data;
       int i = 0;
