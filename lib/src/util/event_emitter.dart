@@ -57,9 +57,10 @@ class EventEmitter {
   void emitReserved(event, [dynamic data]) => _emit(event, data);
 
   /// This function binds the [handler] as a listener to the [event]
-  void on(String event, EventHandler handler) {
+  Function() on(String event, EventHandler handler) {
     this._events.putIfAbsent(event, () => <EventHandler>[]);
     this._events[event]!.add(handler);
+    return () => off(event, handler);
   }
 
   /// This function binds the [handler] as a listener to the first
