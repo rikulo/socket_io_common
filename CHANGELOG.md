@@ -1,8 +1,9 @@
 ## 3.0.0-beta.0
 
 **Features:**
+* Update codebase for compatibility with Socket.IO v4.7.4 and migrate to Dart version 3
 * [socket_io_common#10](https://github.com/rikulo/socket_io_common/pull/10) EventEmitter.on returns disposer function
-* 
+
 ## 2.0.3
 
 **Bug fix:**
