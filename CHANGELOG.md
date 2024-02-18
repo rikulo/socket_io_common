@@ -2,7 +2,7 @@
 
 **Features:**
 * [socket_io_common#10](https://github.com/rikulo/socket_io_common/pull/10) EventEmitter.on returns disposer function
-* 
+
 ## 2.0.3
 
 **Bug fix:**
