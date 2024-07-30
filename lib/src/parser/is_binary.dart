@@ -11,29 +11,19 @@ bool isView(Object obj) {
 }
 
 bool isBinary(obj) {
-  return (obj != null && obj is ByteBuffer) || isView(obj);
+  return obj != null && (obj is ByteBuffer || isView(obj));
 }
 
 bool hasBinary(obj, [bool toJSON = false]) {
-  if (obj == null || (obj is! Map && obj is! List)) {
+  if (obj == null) {
     return false;
-  }
-  if (obj is List && obj is! ByteBuffer && obj is! Uint8List) {
-    for (var i = 0, l = obj.length; i < l; i++) {
-      if (hasBinary(obj[i])) {
-        return true;
-      }
-    }
-    return false;
-  }
-  if (isBinary(obj)) {
-    return true;
   }
 
-  if (obj['toJSON'] != null && obj['toJSON'] is Function && toJSON == false) {
-    return hasBinary(obj.toJSON(), true);
-  }
   if (obj is Map) {
+    if (obj['toJSON'] != null && obj['toJSON'] is Function && toJSON == false) {
+      return hasBinary(obj["tJSON"]!(), true);
+    }
+
     for (var entry in obj.entries) {
       if (hasBinary(entry.value)) {
         return true;
@@ -46,5 +36,10 @@ bool hasBinary(obj, [bool toJSON = false]) {
       }
     }
   }
+
+  if (isBinary(obj)) {
+    return true;
+  }
+  
   return false;
 }
