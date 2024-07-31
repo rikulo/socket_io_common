@@ -21,7 +21,7 @@ bool hasBinary(obj, [bool toJSON = false]) {
 
   if (obj is Map) {
     if (obj['toJSON'] != null && obj['toJSON'] is Function && toJSON == false) {
-      return hasBinary(obj["tJSON"]!(), true);
+      return hasBinary(obj["toJSON"]!(), true);
     }
 
     for (var entry in obj.entries) {
