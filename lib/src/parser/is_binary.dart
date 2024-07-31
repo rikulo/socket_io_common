@@ -29,7 +29,7 @@ bool hasBinary(obj, [bool toJSON = false]) {
         return true;
       }
     }
-  } else if (obj is List) {
+  } else if (obj is List && obj is! TypedData) {
     for (var value in obj) {
       if (hasBinary(value)) {
         return true;
