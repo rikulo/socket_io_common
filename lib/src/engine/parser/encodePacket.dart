@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Potix Corporation. All Rights Reserved 
+// Copyright (C) 2024 Potix Corporation. All Rights Reserved
 // History: 2024/2/13 1:46 PM
 // Author: jumperchen
 import 'dart:convert';
@@ -8,7 +8,9 @@ import 'commons.dart';
 
 encodePacket(Packet packet, bool supportsBinary, callback(_)) {
   if (packet.data is ByteBuffer || packet.data is Uint8List) {
-    return callback(supportsBinary ? packet.data : 'b' + base64Encode(toBuffer(packet.data, true)));
+    return callback(supportsBinary
+        ? packet.data
+        : 'b' + base64Encode(toBuffer(packet.data, true)));
   } else {
     // plain string
     return callback('${PacketTypeMap[packet.type]}' + (packet.data ?? ''));

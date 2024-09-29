@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Potix Corporation. All Rights Reserved 
+// Copyright (C) 2024 Potix Corporation. All Rights Reserved
 // History: 2024/2/13 1:50 PM
 // Author: jumperchen
 

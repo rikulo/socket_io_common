@@ -1,3 +1,9 @@
+## 3.0.0
+
+**Bug fix:**
+* [socket_io_common#12](https://github.com/rikulo/socket_io_common/pull/12) Sending buffer data is not working!
+
+
 ## 3.0.0-beta.0
 
 **Features:**

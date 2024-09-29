@@ -15,36 +15,48 @@ bool isBinary(obj) {
 }
 
 bool hasBinary(obj, [bool toJSON = false]) {
-  if (obj == null || (obj is! Map && obj is! List)) {
+  if (obj == null) {
     return false;
-  }
-  if (obj is List && obj is! ByteBuffer && obj is! Uint8List) {
-    for (var i = 0, l = obj.length; i < l; i++) {
-      if (hasBinary(obj[i])) {
-        return true;
-      }
-    }
-    return false;
-  }
-  if (isBinary(obj)) {
-    return true;
   }
 
-  if (obj['toJSON'] != null && obj['toJSON'] is Function && toJSON == false) {
-    return hasBinary(obj.toJSON(), true);
-  }
-  if (obj is Map) {
-    for (var entry in obj.entries) {
-      if (hasBinary(entry.value)) {
-        return true;
-      }
-    }
-  } else if (obj is List) {
+  if (obj is List && obj is! TypedData) {
     for (var value in obj) {
       if (hasBinary(value)) {
         return true;
       }
     }
   }
+
+  if (isBinary(obj)) {
+    return true;
+  }
+
+  // Check if the object has a toJSON method, regardless of its type (Map, custom object, etc.)
+  var toJsonMethod = _getToJsonMethod(obj);
+  if (toJsonMethod != null && toJSON == false) {
+    return hasBinary(toJsonMethod(), true);
+  }
+
+  if (obj is Map) {
+    for (var entry in obj.entries) {
+      if (hasBinary(entry.value)) {
+        return true;
+      }
+    }
+  }
+
   return false;
+}
+
+// Helper function to dynamically check if an object has a toJSON method
+Function? _getToJsonMethod(obj) {
+  try {
+    var toJsonMethod = obj.toJSON;
+    if (toJsonMethod is Function) {
+      return toJsonMethod;
+    }
+  } catch (e) {
+    // Catch and ignore errors if the method is not present
+  }
+  return null;
 }
