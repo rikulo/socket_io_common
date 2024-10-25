@@ -1,3 +1,8 @@
+## 3.0.1
+
+**Bug fix:**
+* [socket_io_common#13](https://github.com/rikulo/socket_io_common/pull/13) Fix #12 regression bug on toJson.
+
 ## 3.0.0
 
 **Bug fix:**

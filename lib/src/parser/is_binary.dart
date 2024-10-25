@@ -38,6 +38,13 @@ bool hasBinary(obj, [bool toJSON = false]) {
   }
 
   if (obj is Map) {
+    if (obj['toJSON'] != null && obj['toJSON'] is Function && toJSON == false) {
+      return hasBinary(obj['toJSON'](), true);
+    } else if (obj['toJson'] != null &&
+        obj['toJson'] is Function &&
+        toJSON == false) {
+      return hasBinary(obj['toJson'](), true);
+    }
     for (var entry in obj.entries) {
       if (hasBinary(entry.value)) {
         return true;
@@ -50,12 +57,23 @@ bool hasBinary(obj, [bool toJSON = false]) {
 
 // Helper function to dynamically check if an object has a toJSON method
 Function? _getToJsonMethod(obj) {
+  var toJsonMethod = null;
   try {
+    // backwards compatibility for toJSON method
     var toJsonMethod = obj.toJSON;
     if (toJsonMethod is Function) {
       return toJsonMethod;
     }
   } catch (e) {
+    try {
+      // from dart-lang json.dart, the method is called toJson
+      toJsonMethod = obj.toJson;
+      if (toJsonMethod is Function) {
+        return toJsonMethod;
+      }
+    } catch (e) {
+      // Catch and ignore errors if the method is not present
+    }
     // Catch and ignore errors if the method is not present
   }
   return null;
