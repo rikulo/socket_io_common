@@ -10,7 +10,7 @@ import 'commons.dart';
 mapBinary(data, binaryType) {
   final isBuffer = data is ByteBuffer;
   if (binaryType == 'arraybuffer') {
-    return isBuffer ? Uint8List.fromList(data as List<int>) : data;
+    return isBuffer ? data.asUint8List() : data;
   }
   return data;
 }
