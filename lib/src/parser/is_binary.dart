@@ -32,8 +32,8 @@ bool hasBinary(obj, [bool toJSON = false]) {
   }
 
   // Check if the object has a toJSON method, regardless of its type (Map, custom object, etc.)
-  var toJsonMethod = _getToJsonMethod(obj);
-  if (toJsonMethod != null && toJSON == false) {
+  var toJsonMethod;
+  if (toJSON == false && (toJsonMethod = _getToJsonMethod(obj)) != null) {
     return hasBinary(toJsonMethod(), true);
   }
 
@@ -57,6 +57,14 @@ bool hasBinary(obj, [bool toJSON = false]) {
 
 // Helper function to dynamically check if an object has a toJSON method
 Function? _getToJsonMethod(obj) {
+  if (obj is Map ||
+      obj is List ||
+      obj is String ||
+      obj is num ||
+      obj is bool ||
+      obj == null) {
+    return null; // Skip built-in types
+  }
   var toJsonMethod = null;
   try {
     // backwards compatibility for toJSON method
@@ -65,15 +73,15 @@ Function? _getToJsonMethod(obj) {
       return toJsonMethod;
     }
   } catch (e) {
-    try {
-      // from dart-lang json.dart, the method is called toJson
-      toJsonMethod = obj.toJson;
-      if (toJsonMethod is Function) {
-        return toJsonMethod;
-      }
-    } catch (e) {
-      // Catch and ignore errors if the method is not present
+    // Catch and ignore errors if the method is not present
+  }
+  try {
+    // from dart-lang json.dart, the method is called toJson
+    toJsonMethod = obj.toJson;
+    if (toJsonMethod is Function) {
+      return toJsonMethod;
     }
+  } catch (e) {
     // Catch and ignore errors if the method is not present
   }
   return null;

@@ -1,3 +1,8 @@
+## 3.0.2
+
+**Bug fix:**
+* [socket_io_common#15](https://github.com/rikulo/socket_io_common/issues/15) NoSuchMethodError (NoSuchMethodError: Class '[AnyType]' has no instance getter 'toJSON'
+
 ## 3.0.1
 
 **Bug fix:**

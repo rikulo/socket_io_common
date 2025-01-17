@@ -115,6 +115,9 @@ main() {
   test("With toJSON from an Object:", () {
     expect(hasBinary(MyObject()), true);
   });
+  test("With toJSON from an String:", () {
+    expect(hasBinary('plain'), false);
+  });
 }
 
 class MyObject {
