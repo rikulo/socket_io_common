@@ -16,6 +16,10 @@ mapBinary(data, binaryType) {
 }
 
 decodePacket(dynamic encodedPacket, binaryType) {
+  // a workaround for Flutter web WASM
+  if (encodedPacket.runtimeType.toString() == 'JSValue') {
+    encodedPacket = '$encodedPacket'; // force to String type in dart
+  }
   if (encodedPacket is! String) {
     return {'type': "message", 'data': mapBinary(encodedPacket, binaryType)};
   }

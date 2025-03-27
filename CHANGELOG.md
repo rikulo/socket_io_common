@@ -1,3 +1,8 @@
+## 3.1.0
+
+**Bug fix:**
+* can't use "is" checks and "as" casts for Dart WASM (web) builds - https://dart.dev/interop/js-interop/js-types
+
 ## 3.0.2
 
 **Bug fix:**

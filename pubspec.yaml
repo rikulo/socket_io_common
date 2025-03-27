@@ -1,6 +1,6 @@
 name: socket_io_common
 description: Socket.io common parser library.
-version: 3.0.2
+version: 3.1.0
 homepage: https://www.zkoss.org
 repository: https://github.com/rikulo/socket_io_common
 issue_tracker: https://github.com/rikulo/socket_io_common/issues
