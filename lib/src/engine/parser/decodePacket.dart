@@ -4,6 +4,7 @@
 
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:socket_io_common/src/util/unknown_js_type.dart';
 
 import 'commons.dart';
 
@@ -17,7 +18,7 @@ mapBinary(data, binaryType) {
 
 decodePacket(dynamic encodedPacket, binaryType) {
   // a workaround for Flutter web WASM
-  if (encodedPacket.runtimeType.toString() == 'JSValue') {
+  if (isJSString(encodedPacket)) {
     encodedPacket = '$encodedPacket'; // force to String type in dart
   }
   if (encodedPacket is! String) {

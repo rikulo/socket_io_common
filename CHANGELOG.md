@@ -1,3 +1,8 @@
+## 3.1.1
+
+**Bug fix:**
+* [socket_io_common#16](https://github.com/rikulo/socket_io_common/issues/16) [WASM] Failed to check runtimeType in release mode
+
 ## 3.1.0
 
 **Bug fix:**
